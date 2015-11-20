@@ -1,0 +1,25 @@
+{
+    "name": "phossa/phossa-regex",
+    "version": "1.0.0",
+    "license": "MIT",
+    "type": "library",
+    "description": "The regular expression package of Phossa framework",
+    "keywords": ["phossa", "framework", "regular expression", "regex"],
+    "homepage": "https://github.com/phossa/phossa-regex",
+    "authors": [
+        {
+            "name": "Hong Zhang",
+            "homepage": "https://github.com/phossa"
+        }
+    ],
+    "autoload": {
+        "psr-0": { "Phossa\\Regex\\": "src/" }
+    },
+    "require": {
+        "php": ">=5.4.0",
+        "phossa-shared": "~1.*"
+    },
+    "archive": {
+        "exclude": ["!vendor", "tests", "*phpunit.xml",  "composer.lock"]
+    }
+}
