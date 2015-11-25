@@ -8,14 +8,14 @@
  */
 /*# declare(strict_types=1); */
 
-namespace Phossa\Regex\Message;
+namespace Phossa\RegEx\Message;
 
 use Phossa\Shared\Message\MessageAbstract;
 
 /**
- * Message class for Phossa\Regex
+ * Message class for Phossa\RegEx
  *
- * @package \Phossa\Regex
+ * @package \Phossa\RegEx
  * @author  Hong Zhang <phossa@126.com>
  * @version 1.0.0
  * @since   1.0.0 added
