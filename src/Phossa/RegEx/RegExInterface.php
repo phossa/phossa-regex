@@ -90,6 +90,8 @@ interface RegExInterface
      * The result regex can not be used with preg_replace* due to the '\K'
      * in the regex, which may cause bugs
      *
+     * Result is in matched array $m[1] with preg_match_all($pat, $str, $m)
+     *
      * regex:
      *    (?<!\\\\)CHAR                         # the CHAR with no '\' precede
      *    |                                     # OR
@@ -115,6 +117,8 @@ interface RegExInterface
      * The result regex can not be used with preg_replace* due to the '\K'
      * in the regex, which may cause bugs
      *
+     * Result is in matched array $m[1] with preg_match_all($pat, $str, $m)
+     * 
      * @param  string $char the CHAR, or REGEX (unset OPTION_LITERAL first)
      * @param  int $option regex option
      * @param  string $escape the escape char, normally backslash

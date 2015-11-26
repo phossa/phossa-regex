@@ -28,21 +28,21 @@ class Utility extends StaticAbstract implements UtilityInterface
      */
     public static function toPattern(
         /*# string */ $regex,
-        /*# string */ $modifiers = '',
-        /*# string */ $delimiter = '/#@%~&!'
+        /*# string */ $modifiers  = '',
+        /*# string */ $delimiters = '/#@%~&!'
     )/*# : string */ {
         // modifier '1' is converted from (string) TRUE
         $m = $modifiers === '1' ? '' : $modifiers;
 
         // try different delimiter
-        for ($i = 0, $l = strlen($delimiter); $i < $l; ++$i) {
-            if (strpos($regex, $delimiter[$i]) === false) {
-                return $delimiter[$i] . $regex . $delimiter[$i] . $m;
+        for ($i = 0, $l = strlen($delimiters); $i < $l; ++$i) {
+            if (strpos($regex, $delimiters[$i]) === false) {
+                return $delimiters[$i] . $regex . $delimiters[$i] . $m;
             }
         }
 
-        // use '/' and escape any unescaped '/' in $regex
-        return static::wrapWithChar($regex, '/') . $m;
+        // add backslash to unescaped '/'
+        return '/' . static::escapeUnEscaped($regex, '/') . '/' . $m;
     }
 
     /**
@@ -82,11 +82,19 @@ class Utility extends StaticAbstract implements UtilityInterface
      */
     public static function modifyRegEx(
         /*# string */ $regex,
-        $pattern_modifier  = false,
+        $pattern_modifier  = true,
         $named_group       = false,
         $boundary          = false,
         $anchor            = false
     )/*# : string */ {
+        // add group
+        if ($named_group) {
+            $regex = static::groupRegEx(
+                $regex,
+                $named_group === true ? '' : $named_group
+            );
+        }
+
         // add boundary
         if ($boundary) {
             $regex = static::addBoundary($regex);
@@ -95,14 +103,6 @@ class Utility extends StaticAbstract implements UtilityInterface
         // add anchor
         if ($anchor) {
             $regex = static::addBoundary($regex, '^', '$');
-        }
-
-        // add group
-        if ($named_group) {
-            $regex = static::groupRegEx(
-                $regex,
-                $named_group === true ? '' : $named_group
-            );
         }
 
         // return PCRE pattern with modifier
@@ -119,66 +119,148 @@ class Utility extends StaticAbstract implements UtilityInterface
     /**
      * {@inheritDoc}
      */
-    public static function wrapWithChar(
+    public function escapeUnEscaped(
         /*# string */ $string,
-        /*# string */ $char = '"',
-        /*# string */ $escape = '\\'
-    )/*# : string */ {
-        // find all chars (with or without escape)
-        $find = static::toPattern(
-                    sprintf('(?:%s)*+(?:%s)',
-                        preg_quote($escape),
-                        preg_quote($char)
-                    )
-        );
+        /*# string */ $char,
+        /*# string */ $escape = '\\',
+        /*# int */ $option = RegExOption::OPTION_DEFAULT
+    )/*# string */ {
+        // regex for unescaped char
+        $regex = RegEx::unEscapedChar($char, $option, $escape);
 
-        // replace
-        $str = preg_replace_callback($find,
-            function($matches) use ($char, $escape) {
-            return $matches[0] === $char ?
-                sprintf('%s%s', $escape, $char) :
-                sprintf('%s%s%s', $escape, $escape, $matches[0]
-            );
-        }, $string);
+        // convert to pattern
+        $pattern = strpos($char, '#') === false ?
+            ('#' . $regex . '#') :
+            ('(' . $regex . ')');
 
-        // wrap
-        return sprintf('%s%s%s', $char, $str, $char);
+        if (preg_match_all($pattern, $string, $m, PREG_OFFSET_CAPTURE)) {
+            // replacement
+            $replace = $escape . $char;
+
+            // orignal char length
+            $ol = strlen($char);
+
+            // replacement length
+            $rl = strlen($replace);
+
+            // position shift after each replacement
+            $shift = 0;
+
+            // replace matched
+            foreach($m[0] as $matched) {
+                $pos = $matched[1] + $shift;
+                $string = substr_replace($string, $replace, $pos, $ol);
+                $shift += $rl - $ol;
+            }
+        }
+
+        return $string;
     }
 
     /**
      * {@inheritDoc}
      */
-    public static function unwrapWithChar(
+    public function unEscapeEscaped(
+        /*# string */ $string,
+        /*# string */ $char,
+        /*# string */ $escape = '\\',
+        /*# int */ $option = RegExOption::OPTION_DEFAULT
+    )/*# string */ {
+        // regex for escaped char
+        $regex = RegEx::escapedChar($char, $option, $escape);
+
+        // convert to pattern
+        $pattern = strpos($char, '#') === false ?
+            ('#' . $regex . '#') :
+            ('(' . $regex . ')');
+
+        if (preg_match_all($pattern, $string, $m, PREG_OFFSET_CAPTURE)) {
+            // orignal escaped char length
+            $ol = strlen($escape . $char);
+
+            // replacement lenght
+            $rl = strlen($char);
+
+            // position shift after each replacement
+            $shift = 0;
+
+            // replace matched
+            foreach($m[0] as $matched) {
+                $pos = $matched[1] + $shift;
+                $string = substr_replace($string, $char, $pos, $ol);
+                $shift += $rl - $ol;
+            }
+        }
+        return $string;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public static function isWrappedWithChar(
+        /*# string */ $string,
+        /*# string */ $char,
+        /*# string */ $escape = '\\',
+        /*# int */ $option = RegExOption::OPTION_DEFAULT
+    )/*# : bool */ {
+        $len = strlen($char);
+
+        // check start/end chars
+        if (substr($string, 0, $len) === $char &&
+            substr($string, -$len) === $char) {
+            // find unescaped char if any
+            $pat = static::toPattern(
+                RegEx::unEscapedChar($char, $option, $escape)
+            );
+            if (preg_match_all($pat, substr($string, $len, -$len), $m)) {
+                foreach($m[1] as $n) {
+                    // found zero escaped $char
+                    if ($n === $char) return false;
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public static function wrapWithChar(
         /*# string */ $string,
         /*# string */ $char = '"',
-        /*# string */ $escape = '\\'
+        /*# string */ $escape = '\\',
+        /*# int */ $option = RegExOption::OPTION_DEFAULT
     )/*# : string */ {
-        // make sure $string is wrapped with $char
-        $pat = static::toPattern(RegEx::stringWithOpenClose($char, $char));
-        if (!preg_match($pat, $string, $m) || $m[0] !== $string) {
+        // wrapped already
+        if (static::isWrappedWithChar($string, $char, $escape, $option)) {
             return $string;
         }
 
-        // find all chars (with or without escape)
-        $find = static::toPattern(
-                    sprintf('(?:%s)*+(?:%s)',
-                        preg_quote($escape),
-                        preg_quote($char)
-                    )
+        // wrap it
+        return sprintf('%s%s%s',
+            $char,
+            static::escapeUnEscaped($string, $char, $escape, $option),
+            $char
         );
+    }
 
-        // remove escape
-        return preg_replace_callback($find,
-            function($matches) use ($char, $escape) {
-            if ($matches[0] === $char) {
-                return '';
-            } elseif ($matches[0] === ($escape . $char)) {
-                return $char;
-            } else {
-                return substr($matches[0], strlen($escape . $escape));
-            }
-            return $matches[0];
-        }, $string);
+    /**
+     * {@inheritDoc}
+     */
+    public static function unWrapWithChar(
+        /*# string */ $string,
+        /*# string */ $char = '"',
+        /*# string */ $escape = '\\',
+        /*# int */ $option = RegExOption::OPTION_DEFAULT
+    )/*# : string */ {
+        if (static::isWrappedWithChar($string, $char, $escape, $option)) {
+            $len = strlen($char);
+            $str = substr($string, $len, -$len);
+            return static::unEscapeEscaped($str, $char, $escape, $option);
+        }
+        // no wrapped
+        return $string;
     }
 
     /**
@@ -206,8 +288,22 @@ class Utility extends StaticAbstract implements UtilityInterface
     public static function addBoundary(
         /*# string */ $regex,
         /*# string */ $begin = '(?<=\b|[^\d])',
-        /*# string */ $end = '(?=\b|[^\d])'
+        /*# string */ $end   = '(?=\b|[^\d])'
     )/*# : string */ {
         return sprintf('%s%s%s', $begin, $regex, $end);
+    }
+
+    public static function getLineColumn(
+        /*# string */ &$string,
+        /*# int */ $offset,
+        /*# bool */ $startFromOne = true
+    )/*# : array */ {
+        $str  = substr($string, 0, $offset);
+        $line = substr_count($str, "\n");
+        $last = strrpos($str, "\n");
+        $col  = strlen($str) - ($last === false ? 0 : $last + 1);
+        return array(
+            $line + (int) $startFromOne, $col + (int) $startFromOne
+        );
     }
 }

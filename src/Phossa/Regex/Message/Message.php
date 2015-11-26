@@ -27,11 +27,6 @@ class Message extends MessageAbstract
      * @type  int
      */
 
-    /**
-     * Wrong log level name
-     */
-    const WRONG_LOG_LEVEL       = 1511200931;
-
     /**#@-*/
 
     /**

@@ -15,6 +15,7 @@ use Phossa\Shared\Pattern\StaticAbstract;
 /**
  * Implemetation of RegExInterface
  *
+ * @static
  * @package \Phossa\RegEx
  * @author  Hong Zhang <phossa@126.com>
  * @see     Phossa\RegEx\RegExInterface
@@ -130,9 +131,17 @@ class RegEx extends StaticAbstract implements RegExInterface
         // escape the literal char
         if ($option & RegExOption::OPTION_LITERAL) $char = preg_quote($char);
 
+        // if $char == $escape, find odd number of $char
+        if ($char === $escape) {
+            return sprintf(
+                '(?:^|(?<!%s))((?:%s%s)*+\K%s)',
+                $char, $char, $char, $char
+            );
+        }
+
         // the result regex
         return sprintf(
-            '(?:^|(?<!%s))(?:%s|(?=(?:%s%s)++%s)%s++\K%s)',
+            '(?:^|(?<!%s))(%s|(?=(?:%s%s)++%s)%s++\K%s)',
             $escape, $char, $escape, $escape, $char, $escape, $char
         );
     }
@@ -151,9 +160,17 @@ class RegEx extends StaticAbstract implements RegExInterface
         // escape the literal char
         if ($option & RegExOption::OPTION_LITERAL) $char = preg_quote($char);
 
-         // the result regex
+        // if $char == $escape, find even number of $char
+        if ($char === $escape) {
+            return sprintf(
+                '(?:^|(?<!%s))((?=(?:%s%s)++)%s*\K%s%s)',
+                $char, $char, $char, $char, $char, $char
+            );
+        }
+
+        // the result regex
         return sprintf(
-            '(?:^|(?<!%s))(?:%s%s|(?=(?:%s%s)++%s%s)(?:%s%s)++\K%s%s)',
+            '(?:^|(?<!%s))(%s%s|(?=(?:%s%s)++%s%s)(?:%s%s)++\K%s%s)',
             $escape, $escape, $char, $escape, $escape, $escape, $char,
             $escape, $escape, $escape, $char
         );

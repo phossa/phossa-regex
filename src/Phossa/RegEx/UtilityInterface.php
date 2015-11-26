@@ -26,7 +26,7 @@ interface UtilityInterface
      *
      * @param  string $regex the regex
      * @param  string $modifiers (optional) pattern modifiers\
-     * @param  string $delimiter (optional) pick delimiter char from here
+     * @param  string $delimiters (optional) pick delimiter char from here
      * @return string
      * @access public
      * @static
@@ -34,15 +34,15 @@ interface UtilityInterface
      */
     public static function toPattern(
         /*# string */ $regex,
-        /*# string */ $modifiers = '',
-        /*# string */ $delimiter = '/#@%~&!'
+        /*# string */ $modifiers  = '',
+        /*# string */ $delimiters = '/#@%~&!'
     )/*# : string */;
 
     /**
      * Check regex for syntax error. return '' or error message
      *
      * @param  string $regex the regex
-     * @return string the error message
+     * @return string the error message or empty string
      * @access public
      * @static
      * @api
@@ -63,20 +63,78 @@ interface UtilityInterface
      * @param  bool $boundary add default boundary
      * @param  bool $anchor add start/end anchor
      * @return string
+     * @see    self::toPattern()
+     * @see    self::addBoundary()
+     * @see    self::groupRegEx()
      * @access public
      * @static
      * @api
      */
     public static function modifyRegEx(
         /*# string */ $regex,
-        $pattern_modifier  = false,
+        $pattern_modifier  = true,
         $named_group       = false,
         $boundary          = false,
         $anchor            = false
     )/*# : string */;
 
     /**
-     * Wrap a string with a char. Usualy a quote.
+     * Escaped those unescaped chars in the string
+     *
+     * @param  string $string string to modify
+     * @param  string $char unescaped CHAR to look for
+     * @param  string $escape the escape char to use
+     * @param  int $option (optional) regex option
+     * @return string
+     * @access public
+     * @api
+     */
+    public function escapeUnescaped(
+        /*# string */ $string,
+        /*# string */ $char,
+        /*# string */ $escape = '\\',
+        /*# int */ $option = RegExOption::OPTION_DEFAULT
+    )/*# string */;
+
+    /**
+     * Unescaped those escaped char in the string
+     *
+     * @param  string $string string to modify
+     * @param  string $char unescaped char to look for
+     * @param  string $escape the escape char to use
+     * @param  int $option (optional) regex option
+     * @return string
+     * @access public
+     * @api
+     */
+    public function unEscapeEscaped(
+        /*# string */ $string,
+        /*# string */ $char,
+        /*# string */ $escape = '\\',
+        /*# int */ $option = RegExOption::OPTION_DEFAULT
+    )/*# string */;
+
+    /**
+     * Test if string is wrapped with char
+     *
+     * @param  string $string the subject string
+     * @param  string $char the literal wrapping char
+     * @param  string $escape (optional) the literal escape char
+     * @param  int $option (optional) regex option
+     * @return bool
+     * @access public
+     * @static
+     * @api
+     */
+    public static function isWrappedWithChar(
+        /*# string */ $string,
+        /*# string */ $char,
+        /*# string */ $escape = '\\',
+        /*# int */ $option = RegExOption::OPTION_DEFAULT
+    )/*# : bool */;
+
+    /**
+     * Wrap a string with a char. Usualy with a quote char.
      *
      * This method also escape the unescaped same char in the string with a
      * single '\' in the string and escaped same char with a double of '\\'
@@ -84,30 +142,38 @@ interface UtilityInterface
      * @param  string $string the subject string
      * @param  string $char the literal wrapping char
      * @param  string $escape (optional) the literal escape char
+     * @param  int $option (optional) regex option
      * @return string
      * @access public
      * @static
+     * @api
      */
     public static function wrapWithChar(
         /*# string */ $string,
-        /*# string */ $char = '"',
-        /*# string */ $escape = '\\'
+        /*# string */ $char   = '"',
+        /*# string */ $escape = '\\',
+        /*# int */ $option = RegExOption::OPTION_DEFAULT
     )/*# : string */;
 
     /**
      * Unwrap a string with char. Used to remove surrounding quotes etc.
      *
+     * If not meet requirements return the same input $string
+     *
      * @param  string $string the target string
      * @param  string $char the literal char to unwrap
      * @param  string $escape (optional) the escape char
+     * @param  int $option (optional) regex option
      * @return string
      * @access public
      * @static
+     * @api
      */
-    public static function unwrapWithChar(
+    public static function unWrapWithChar(
         /*# string */ $string,
-        /*# string */ $char = '"',
-        /*# string */ $escape = '\\'
+        /*# string */ $char   = '"',
+        /*# string */ $escape = '\\',
+        /*# int */ $option = RegExOption::OPTION_DEFAULT
     )/*# : string */;
 
     /**
@@ -118,6 +184,7 @@ interface UtilityInterface
      * @return string
      * @access public
      * @static
+     * @api
      */
     public static function groupRegEx(
         /*# string */ $regex,
@@ -138,10 +205,28 @@ interface UtilityInterface
      * @return string
      * @access public
      * @static
+     * @api
      */
     public static function addBoundary(
         /*# string */ $regex,
         /*# string */ $begin = '(?<=\b|[^\d])',
-        /*# string */ $end = '(?=\b|[^\d])'
+        /*# string */ $end   = '(?=\b|[^\d])'
     )/*# : string */;
+
+    /**
+     * Get the line and col number from the offset in the string
+     *
+     * @param  string &$string the target string
+     * @param  int $offset the offset (start from 0)
+     * @param  bool $startFromOne return line/col start from one
+     * @return array list($line, $col) (start from 1)
+     * @access public
+     * @static
+     * @api
+     */
+    public static function getLineColumn(
+        /*# string */ &$string,
+        /*# int */ $offset,
+        /*# bool */ $startFromOne = true
+    )/*# : array */;
 }
