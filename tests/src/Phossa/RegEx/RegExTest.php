@@ -312,6 +312,8 @@ EOF;';
      */
     public function testBalancedString()
     {
+        var_dump(RegEx::balancedString('${', '}',
+            RegExOption::OPTION_DEFAULT));
         // pattern
         $regex = RegEx::balancedString('{{', '}}');
         $pattern = Utility::toPattern($regex);
@@ -319,6 +321,7 @@ EOF;';
         // test 1
         $str1 = '{{x{y}} {z}} {{a {{bc}}';
         $this->assertEquals(2, preg_match_all($pattern, $str1, $m));
+
         $this->assertEquals('{{x{y}}', $m[0][0]);
         $this->assertEquals('{{bc}}', $m[0][1]);
 

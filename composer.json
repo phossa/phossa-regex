@@ -1,6 +1,5 @@
 {
     "name": "phossa/phossa-regex",
-    "version": "1.0.0",
     "license": "MIT",
     "type": "library",
     "description": "The regular expression package of Phossa framework",
@@ -15,9 +14,12 @@
     "autoload": {
         "psr-0": { "Phossa\\Regex\\": "src/" }
     },
+    "autoload-dev": {
+        "psr-0": { "Phossa\\Regex\\": "tests/src/" }
+    },
     "require": {
         "php": ">=5.4.0",
-        "phossa-shared": "~1.*"
+        "phossa/phossa-shared": "~1.0.8"
     },
     "archive": {
         "exclude": ["!vendor", "tests", "*phpunit.xml",  "composer.lock"]
